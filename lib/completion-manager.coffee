@@ -1,7 +1,7 @@
 {LTool,get_tex_root,find_in_files,is_file} = require './ltutils'
 LTSelectListView = require './ltselectlist-view'
 LTSelectList2View = require './ltselectlist2-view'
-#get_ref_completions = require './get-ref-completions'
+get_ref_completions = require './parsers/get-ref-completions'
 get_bib_completions = require './parsers/get-bib-completions'
 path = require 'path'
 fs = require 'fs'
@@ -73,12 +73,7 @@ class CompletionManager extends LTool
 
     fname = get_tex_root(te) # pass TextEditor, thanks to ig0777's patch
 
-    parsed_fname = path.parse(fname)
-
-    filedir = parsed_fname.dir
-    filebase = parsed_fname.base  # name only includes the name (no dir, no ext)
-
-    labels = find_in_files(filedir, filebase, /\\label\{([^\}]+)\}/g)
+    labels = get_ref_completions(fname)
 
     # TODO add partially specified label to search field
     @sel_view.setItems(labels)
