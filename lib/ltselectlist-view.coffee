@@ -11,13 +11,16 @@ class LTSelectListView extends SelectListView
     @panel.hide()
 
   viewForItem: (item) ->
-    "<li>#{item}</li>"
+    "<li>#{item.id} #{item.tag} page #{item.page}</li>"
+
+  getFilterKey: ->
+    'id'
 
   confirmed: (item) ->
     @selected_item = item
     @restoreFocus()
     @panel.hide()
-    @callback(item)
+    @callback(item.id)
 
   # API unclear: cancel or cancelled?
   cancel: ->
