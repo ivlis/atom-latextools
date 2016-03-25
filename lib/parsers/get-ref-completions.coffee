@@ -16,6 +16,6 @@ get_ref_completions = (rootfile) ->
 
   labels = []
   while label = rx.exec aux
-    labels.push label[1]
+    labels.push {id: label[1], tag: label[2], page: label[3]}
 
   return labels
