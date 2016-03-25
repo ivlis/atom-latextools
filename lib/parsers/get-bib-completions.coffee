@@ -1,4 +1,5 @@
 fs = require 'fs'
+bib2json = require 'bib2json'
 
 module.exports =
 get_bib_completions = (bibfile) ->
@@ -9,11 +10,14 @@ get_bib_completions = (bibfile) ->
   multi_rx = /\b(author|title|year|editor|journal|eprint)\s*=\s*(?:\{|"|\b)(.+?)(?:\}+|"|\b)\s*,?\s*$/i    # Python's \Z = JS's $
 
   try
-    bib = fs.readFileSync(bibfile, 'utf-8').split('\n')
+    bibfile = fs.readFileSync(bibfile, 'utf-8')
+    bib = bib2json bibfile
   catch error
     atom.notifications.addError "cannot read #{bibfile}",
       detail: error.toString()
     return
+
+  console.log( "Found #{bib.entries.length} total bib entries with #{bib.errors.length} errors")
 
   keywords = []
   titles = []
@@ -41,78 +45,14 @@ get_bib_completions = (bibfile) ->
     # print(authors)
     return authors
 
-  entry = {   "keyword": "", "title": "", "author": "", "year": "", "editor": "", "journal": "", "eprint": "" }
+  keywords = bib.entries.map (e) -> e.EntryKey
+  titles = bib.entries.map (e) -> e.Fields.title
+  authors = bib.entries.map (e) -> e.Fields.author
+  years = bib.entries.map (e) -> e.Fields.year
+  journals = bib.entries.map (e) -> e.Fields.journal
+    #       titles.push entry.Fields.title
 
-  for line in bib
-    line = line.trim()
-    # Let's get rid of irrelevant lines first
-    if line == "" || line[0] == '%'
-      continue
-    if line.toLowerCase()[0...8] == "@comment"
-      continue
-    if line.toLowerCase()[0...7] == "@string"
-      continue
-    if line.toLowerCase()[0...9] == "@preamble"
-      continue
-    if line[0] == "@"
-      # First, see if we can add a record; the keyword must be non-empty, other fields not
-      if entry["keyword"]
-        keywords.push(entry["keyword"])
-        t = entry["title"].replace('{\\textquoteright}', '').replace(/\{/g,'').replace(/\}/g,'')
-        titles.push(t)
-        t = t.split(sep)[0]
-        titles_short.push (if t.length > 40 then t[0...40] + '...' else t)
-        years.push(entry["year"])
-        # For author, if there is an editor, that's good enough
-        a = entry["author"] || entry["editor"] || "????"
-        authors.push(a)
-        authors_short.push(format_author(a))
-        journals.push(entry["journal"] || entry["eprint"] || "????")
-        # Now reset for the next iteration
-        entry["keyword"] = ""
-        entry["title"] = ""
-        entry["year"] = ""
-        entry["author"] = ""
-        entry["editor"] = ""
-        entry["journal"] = ""
-        entry["eprint"] = ""
-      # Now see if we get a new keyword
-      kp_match = kp_rx.exec(line)
-      if kp_match
-        # console.log("keyword: #{kp_match[1]}")
-        entry["keyword"] = kp_match[1]
-      else
-        # console.log("Cannot process this @ line: " + line)
-        # console.log("Previous keyword (if any): " + entry["keyword"])
-      continue
-    # Now test for title, author, etc.
-    # Note: we capture only the first line, but that's OK for our purposes
-    multi_match = multi_rx.exec(line)
-    if multi_match
-      key = multi_match[1].toLowerCase()
-      value = multi_match[2]
-      entry[key] = value
-      # console.log("key = #{key}: value = #{value}")
-    else
-      # console.log("no multi_match for line: #{line}")
-    continue
-
-  # at the end, we are left with one bib entry
-  keywords.push(entry["keyword"])
-  t = entry["title"].replace('{\\textquoteright}', '').replace(/\{/g,'').replace(/\}/g,'')
-  titles.push(t)
-  t = t.split(sep)[0]
-  titles_short.push (if t.length > 40 then t[0...40] + '...' else t)
-  years.push(entry["year"])
-  a = entry["author"] || entry["editor"] || "????"
-  authors.push(a)
-  authors_short.push(format_author(a))
-  journals.push(entry["journal"] || entry["eprint"] || "????")
-
-  # console.log( "Found #{keywords.length} total bib entries")
-  # console.log(titles)
-
-
+  console.log titles
 
   # for i in [0...keywords.length]
   #   # Filter out }'s at the end. There should be no commas left
@@ -121,5 +61,9 @@ get_bib_completions = (bibfile) ->
   #   authors_short[i] = format_author(authors[i])
   #   t = t.split(sep)[0]
   #   titles_short[i] = if t.length > 40 then t[0...40] + '...' else t
+
+  authors_short = authors
+  titles_short = titles
+
 
   return [keywords, titles, authors, years, authors_short, titles_short, journals]
