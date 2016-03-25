@@ -12,7 +12,7 @@ get_ref_completions = (rootfile) ->
       detail: error.toString()
     return
 
-  rx = /\\newlabel{([^}]+)}{{(\d+)}{(\d+)}.*}/g
+  rx = /\\newlabel{([^}]+)}{{([^}]+)}{(\d+)}.*}/g
 
   labels = []
   while label = rx.exec aux
