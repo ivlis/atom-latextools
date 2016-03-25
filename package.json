@@ -16,7 +16,8 @@
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
-    "atom-space-pen-views": "^2.1.0"
+    "atom-space-pen-views": "^2.1.0",
+    "bib2json": "~0.0.1"
   },
   "consumedServices": {
     "snippets": {
